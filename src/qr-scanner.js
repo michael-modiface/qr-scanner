@@ -15,13 +15,15 @@ export default class QrScanner {
         onDecode,
         canvasSizeOrOnDecodeError = this._onDecodeError,
         canvasSizeOrCalculateScanRegion = this._calculateScanRegion,
-        preferredFacingMode = 'environment'
+        preferredFacingMode = 'environment',
+        deviceId = null
     ) {
         this.$video = video;
         this.$canvas = document.createElement('canvas');
         this._onDecode = onDecode;
         this._legacyCanvasSize = QrScanner.DEFAULT_CANVAS_SIZE;
         this._preferredFacingMode = preferredFacingMode;
+        this._deviceId = deviceId;
         this._active = false;
         this._paused = false;
         this._flashOn = false;
@@ -138,7 +140,8 @@ export default class QrScanner {
         }
 
         let facingMode = this._preferredFacingMode;
-        return this._getCameraStream(facingMode, true)
+        let deviceId = this._deviceId;
+        return this._getCameraStream(facingMode, true, deviceId)
             .catch(() => {
                 // We (probably) don't have a camera of the requested facing mode
                 facingMode = facingMode === 'environment' ? 'user' : 'environment';
@@ -346,7 +349,7 @@ export default class QrScanner {
         console.log(error);
     }
 
-    _getCameraStream(facingMode, exact = false) {
+    _getCameraStream(facingMode, exact = false, deviceId = null) {
         const constraintsToTry = [{
             width: { min: 1024 }
         }, {
@@ -358,6 +361,12 @@ export default class QrScanner {
                 facingMode = { exact: facingMode };
             }
             constraintsToTry.forEach(constraint => constraint.facingMode = facingMode);
+        }
+        if (deviceId !== null) {
+            if (exact) {
+                deviceId = { exact: deviceId };
+            }
+            constraintsToTry.forEach(constraint => constraint.deviceId = deviceId);
         }
         return this._getMatchingCameraStream(constraintsToTry);
     }
